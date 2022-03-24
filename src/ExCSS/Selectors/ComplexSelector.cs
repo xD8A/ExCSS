@@ -3,7 +3,7 @@ using System.IO;
 
 namespace ExCSS
 {
-    internal sealed class ComplexSelector : StylesheetNode, ISelector
+    internal sealed class ComplexSelector : StylesheetNode, IComplexSelector
     {
         private readonly List<CombinatorSelector> _selectors;
 
@@ -12,15 +12,25 @@ namespace ExCSS
             _selectors = new List<CombinatorSelector>();
         }
 
-        private struct CombinatorSelector
+        private struct CombinatorSelector : ICombinatorSelector
         {
             public string Delimiter;
             public ISelector Selector;
+            string ICombinatorSelector.Delimiter => Delimiter;
+            ISelector ICombinatorSelector.Selector => Selector;
         }
 
 
         public string Text => this.ToCss();
         public int Length => _selectors.Count;
+        public IEnumerable<ICombinatorSelector> Selectors {
+            get {
+                foreach (var selector in _selectors)
+                {
+                    yield return (ICombinatorSelector)selector;
+                }
+            }
+        }
         public bool IsReady { get; private set; }
 
         public Priority Specificity

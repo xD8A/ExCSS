@@ -2,7 +2,7 @@
 
 namespace ExCSS
 {
-    internal sealed class CompoundSelector : Selectors, ISelector
+    internal sealed class CompoundSelector : Selectors, ISelectorEnumerable
     {
         public override void ToCss(TextWriter writer, IStyleFormatter formatter)
         {

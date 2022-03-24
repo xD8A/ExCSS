@@ -28,7 +28,7 @@ namespace ExCSS
         public string Text => this.ToCss();
     }
 
-    public sealed class PageSelector : StylesheetNode, ISelector
+    public sealed class PageSelector : StylesheetNode, IPageSelector
     {
         private readonly string _name;
 
@@ -49,5 +49,6 @@ namespace ExCSS
 
         public Priority Specificity => Priority.Inline;
         public string Text => this.ToCss();
+        public string Name => _name;
     }
 }

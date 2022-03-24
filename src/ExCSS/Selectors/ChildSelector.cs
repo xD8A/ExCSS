@@ -2,7 +2,7 @@
 
 namespace ExCSS
 {
-    internal abstract class ChildSelector : StylesheetNode, ISelector
+    internal abstract class ChildSelector : StylesheetNode, IChildSelector
     {
         private readonly string _name;
         protected int Step;
@@ -30,6 +30,9 @@ namespace ExCSS
 
         public Priority Specificity => Priority.OneClass;
         public string Text => this.ToCss();
+        public string Name => _name;
+        int IChildSelector.Step => Step;
+        int IChildSelector.Offset => Offset;
 
         internal ChildSelector With(int step, int offset, ISelector kind)
         {

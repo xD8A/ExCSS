@@ -1137,6 +1137,180 @@ font-weight:bold;}";
         }
 
         [Fact]
+        public void CssStyleSheetSelectorsGetAllChild()
+        {
+            const string source = @"
+li:nth-child(2) { }
+:nth-last-child(-n+3) { }
+p:nth-of-type(2n+1) { }
+p:nth-last-of-type(4n) { color: lime; }
+:nth-column(odd) { }
+:nth-last-column(even) { }
+";
+            var parser = new StylesheetParser();
+
+            var sheet = parser.Parse(source);
+
+            var selectors = sheet.GetAllSelectors<IChildSelector>().ToArray();
+            Assert.Equal(6, selectors.Length);
+            
+            Assert.Equal("nth-child", selectors[0].Name);
+            Assert.Equal(0, selectors[0].Step);  
+            Assert.Equal(2, selectors[0].Offset);
+
+            Assert.Equal("nth-last-child", selectors[1].Name);
+            Assert.Equal(-1, selectors[1].Step);  
+            Assert.Equal(3, selectors[1].Offset);
+
+            Assert.Equal("nth-of-type", selectors[2].Name);
+            Assert.Equal(2, selectors[2].Step);
+            Assert.Equal(1, selectors[2].Offset);
+
+            Assert.Equal("nth-last-of-type", selectors[3].Name);
+            Assert.Equal(4, selectors[3].Step);
+            Assert.Equal(0, selectors[3].Offset);
+
+            Assert.Equal("nth-column", selectors[4].Name);
+            Assert.Equal(2, selectors[4].Step);
+            Assert.Equal(1, selectors[4].Offset);
+
+            Assert.Equal("nth-last-column", selectors[5].Name);
+            Assert.Equal(2, selectors[5].Step);
+            Assert.Equal(0, selectors[5].Offset);
+
+        }
+
+
+        [Fact]
+        public void CssStyleSheetSelectorsGetAllCompound()
+        {
+            const string source = @"
+li:nth-child(2) { }
+:nth-last-child(-n+3) { }
+p:nth-of-type(2n+1) { }
+p:nth-last-of-type(4n) { color: lime; }
+:nth-column(odd) { }
+:nth-last-column(even) { }
+";
+            var parser = new StylesheetParser();
+
+            var sheet = parser.Parse(source);
+
+            var selectors = sheet.GetAllSelectors<ISelectorEnumerable>().ToArray();
+            Assert.Equal(3, selectors.Length);
+
+            Assert.Equal(2, selectors[0].Count());
+            Assert.Equal("li", selectors[0].ElementAt(0).Text);
+            Assert.IsAssignableFrom<IChildSelector>(selectors[0].ElementAt(1));
+
+            Assert.Equal(2, selectors[1].Count());
+            Assert.Equal("p", selectors[1].ElementAt(0).Text);
+            Assert.IsAssignableFrom<IChildSelector>(selectors[1].ElementAt(1));
+
+            Assert.Equal(2, selectors[2].Count());
+            Assert.Equal("p", selectors[2].ElementAt(0).Text);
+            Assert.IsAssignableFrom<IChildSelector>(selectors[2].ElementAt(1));
+        }
+
+        [Fact]
+        public void CssStyleSheetSelectorsGetAllComplex()
+        {
+            const string source = @"
+:matches(header, main, footer) p:hover { color: red; cursor: pointer; }
+";
+            var parser = new StylesheetParser();
+
+            var sheet = parser.Parse(source);
+
+            var selectors = sheet.GetAllSelectors<IComplexSelector>();
+            Assert.Equal(1, selectors.Count());
+
+            var selector = selectors.First();
+            Assert.Equal(":matches(header,main,footer) p:hover", selector.Text);
+            Assert.Equal(2, selector.Selectors.Count());
+            var subSelector = selector.Selectors.First();
+            Assert.Equal(" ", subSelector.Delimiter);
+            Assert.Equal(":matches(header,main,footer)", subSelector.Selector.Text);
+            subSelector = selector.Selectors.Last();
+            Assert.Null(subSelector.Delimiter);
+            Assert.Equal("p:hover", selector.Selectors.Last().Selector.Text);
+        }
+
+        [Fact]
+        public void CssStyleSheetSelectorsGetAllPseudo()
+        {
+            const string source = @"
+:root { background: yellow; }
+:scope { background-color: lime; } 
+:only-of-type { background-color: lime; }
+:first-of-type { color: red; }
+:last-of-type { color: lime; }
+:only-child { background-color: lime; }
+:first-child { color: lime; }
+:last-child { color: lime; }
+:empty { background: pink; height: 80px; width: 80px; }
+:any-link { color: green; }
+:link { color: slategray; }
+:visited { background-color: white } 
+:active { color: red; }
+:hover { background: gold; }
+:focus { color: red; }
+:focus-visible { outline: 4px dashed darkorange; }
+:focus-within { background: cyan; }
+:target { background-color: gold; }
+:enabled { color: #22AA22; }
+:disabled { background: #ccc; }
+:checked { margin-left: 25px; border: 1px solid blue; }
+//:unchecked { }
+:indeterminate { background: lime; }
+:placeholder-shown { border-color: silver; }
+:default { background-color: lime; }
+:valid { }
+:invalid { background-color: #ffdddd; }
+:required { }
+:in-range { background-color: rgba(0, 255, 0, 0.25); }
+:out-of-range { background-color: rgba(255, 0, 0, 0.25); border: 2px solid red; }
+:optional { }
+:read-only { }
+:read-write { }
+:shadow { }
+:dir(rtl) { background-color: red; }
+:dir(ltr) { background-color: green; }
+:has(p) { }
+//:matches(header, main, footer) :hover { color: red; cursor: pointer; }
+//:nth-child(2) { }
+//:nth-last-child(-n+3) { }
+//:nth-of-type(2n+1) { }
+//:nth-last-of-type(4n) { color: lime; }
+//:nth-column(odd) { }
+//:nth-last-column(even) { }
+:not(p) { }
+:lang(en) { }
+//contains { }
+:host-context(h1) { font-weight: bold; }
+";
+            var selectorNames = source.Split("\n")
+                .Select(s => s.Trim())
+                .Where(s => s.Length > 0 && !s.StartsWith("//"))
+                .Select(s => s.Substring(0, s.IndexOf('{')).TrimEnd())
+                .ToArray();
+
+            var parser = new StylesheetParser();
+
+            var sheet = parser.Parse(source);
+
+            var selectors = sheet.GetAllSelectors<ISimpleSelector>().ToArray();
+
+            Assert.Equal(selectorNames.Length, selectors.Length);
+            for (var i = 0; i < selectorNames.Length; i++)
+            {
+                Assert.Equal(selectorNames[i], selectors[i].Text);
+            }
+
+
+        }
+
+        [Fact]
         public void CssColorFunctionsMixAllShouldWork()
         {
             var parser = new StylesheetParser();

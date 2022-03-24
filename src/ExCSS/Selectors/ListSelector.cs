@@ -1,8 +1,9 @@
 ﻿using System.IO;
+using System.Xml.Linq;
 
 namespace ExCSS
 {
-    internal sealed class ListSelector : Selectors, ISelector
+    internal sealed class ListSelector : Selectors, ISelectorEnumerable
     {
         public bool IsInvalid { get; internal set; }
 

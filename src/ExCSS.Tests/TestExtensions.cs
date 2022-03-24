@@ -36,6 +36,39 @@ namespace ExCSS.Tests
             }
         }
 
+        public static IEnumerable<T> GetAllSelectors<T>(this IStylesheetNode node)
+            where T : ISelector
+        {
+            if (node == null)
+                throw new ArgumentNullException(nameof(node));
+
+            if (node is T)
+            {
+                yield return (T)node;
+            }
+
+            if (node is ISelectorEnumerable selectors)
+            {
+                foreach (var selector in selectors.SelectMany(m => m.GetAllSelectors<T>()))
+                {
+                    yield return selector;
+                }
+            }
+
+            if (node is IComplexSelector combinatorSelector)
+            {
+                foreach (var selector in combinatorSelector.Selectors.SelectMany(m => m.Selector.GetAllSelectors<T>()))
+                {
+                    yield return selector;
+                }
+            }
+
+            foreach (var selector in node.Children.SelectMany(m => m.GetAllSelectors<T>()))
+            {
+                yield return selector;
+            }
+        }
+
         public static Stylesheet ToCssStylesheet(this Stream content)
         {
             var parser = new StylesheetParser();

@@ -1,8 +1,9 @@
 ﻿using System.IO;
+using System.Xml.Linq;
 
 namespace ExCSS
 {
-    internal sealed class SimpleSelector : StylesheetNode, ISelector
+    internal sealed class SimpleSelector : StylesheetNode, ISimpleSelector
     {
         public SimpleSelector() : this(Priority.Zero, Keywords.Asterisk)
         {
